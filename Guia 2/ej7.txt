@@ -1,0 +1,1 @@
+La entropia maxima de una fuente de informacion con 4 simbolos sera log2(4) = 2, y esto se dara cuando los 4 simbolos sean equiprobables, porque en este caso la incertidumbre sera maxima

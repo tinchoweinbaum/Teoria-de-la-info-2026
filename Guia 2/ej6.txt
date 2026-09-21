@@ -1,0 +1,1 @@
+La entropia de una fuente de memoria nula con un unico simbolo es de 0, debido a que la entropia representa a incertidumbre que tendra el receptor de la fuente de informacion antes de conocer el mensaje emitido
