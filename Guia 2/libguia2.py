@@ -5,8 +5,6 @@ Vale la pena modelar los elementos de la materia con Clases? Crear la clase Fuen
 import math
 import random
 
-from itertools import product
-
 def getInfo_prob(prob):
     """
     Recibe la probabilidad de un suceso y devuelve la cantidad de información que se
@@ -86,7 +84,16 @@ def _getExtensionOrdN(alfabeto, n):
 
     Función "privada"
     """
-    return [''.join(map(str, p)) for p in product(alfabeto, repeat=n)]
+    extension = [""]
+
+    for _ in range(n):
+        nueva_extension = []
+        for comb in extension:
+            for elem in alfabeto:
+                nueva_extension.append(comb + str(elem))
+        extension = nueva_extension
+
+    return extension
 
 def getExtensionProbsOrdN(alfabeto, probs, n):
     """
