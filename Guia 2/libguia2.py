@@ -1,5 +1,5 @@
 """
-Vale la pena modelar los elementos de la materia con Clases? Crear la clase Fuente y darle métodos tipo getEntropia
+Reescribir las funciones que trabajan con la matriz de transición para que las COLUMNAS sumen 1.
 """
 
 import math
@@ -109,37 +109,10 @@ def getExtensionProbsOrdN(alfabeto, probs, n):
 
     return extOrdN, probExtOrdN
 
-def getVectorMarkov_simulacion(matrizProbs, iteraciones = 100000):
+def getVectorMarkov_analitico(matrizProbs, tolerancia=1e-6):
     """
-    Recibe la matriz de transición de una fuente de Markov de orden 1 y devuelve su vector
-    de transición hallado de manera empírica.
-
-    Preguntar si este método tiene alguna ventaja o es mejor hacerlo analíticamente el 100% de las veces
-
-    Preguntar si la matriz se suma 1 en las filas o en las columnas, y si se puede devolver la traspuesta
-    """
-    vecMarkov = [0] * len(matrizProbs)
-
-    estados = list(range(len(matrizProbs)))
-    estadoAct = random.choice(estados)
-
-    for _ in range(iteraciones):
-        estadoNew = random.choices(estados, weights = matrizProbs[estadoAct], k=1)[0]
-        vecMarkov[estadoNew] += 1/iteraciones
-        estadoAct = estadoNew
-
-    return vecMarkov
-
-def getVectorMarkov_analitico(matrizProbs, tolerancia = 1e-6):
-    """
-    Recibe la matriz de transición de una fuente de Markov de orden 1 y devuelve su vector
-    de transición hallado de manera analítica con el método de las potencias.
-
-    Es más eficiente que la versión empírica.
-
-    PREGUNTAR EL ORDEN DE LA MATRIZ!!!!! LAS FILAS O LAS COLUMNAS SUMAN 1??????????????
-
-    PREGUNTAR COMO HACER PARA SABER SI UNA FUENTE ES DE MEMORIA O NO!!!!!!!!!
+    Recibe la matriz de transición de una fuente de Markov de orden 1 (donde las COLUMNAS suman 1)
+    y devuelve su vector estacionario hallado con el método de las potencias.
     """
     n = len(matrizProbs)
     
@@ -149,14 +122,14 @@ def getVectorMarkov_analitico(matrizProbs, tolerancia = 1e-6):
     while True:
         pi_nuevo = [0.0] * n
         
-        for i in range(n): # Itera vectores pi hasta que la tolerancia sea menor al cambio.
+        # Multiplicación Matriz x Vector Columna: pi_nuevo[i] = suma_j(P[i][j] * pi[j])
+        for i in range(n):
             for j in range(n):
-                pi_nuevo[j] += pi[i] * matrizProbs[i][j]
+                pi_nuevo[i] += matrizProbs[i][j] * pi[j]
         
         # Cálculo del error (norma L1 de la diferencia)
         error = sum(abs(pi_nuevo[k] - pi[k]) for k in range(n))
-        
-        # Condición de corte
+
         if error <= tolerancia:
             return pi_nuevo
             
@@ -167,14 +140,14 @@ def getEntropiaMarkov(matrizProbs, vectorMarkov):
 
     for i in range(len(vectorMarkov)):
         for j in range(len(matrizProbs[i])):
-            if matrizProbs[i][j] != 0:
-                entrop += vectorMarkov[i] * matrizProbs[i][j]*math.log2(1/matrizProbs[i][j])
+            if matrizProbs[j][i] != 0:
+                entrop += vectorMarkov[i] * matrizProbs[j][i]*math.log2(1/matrizProbs[j][i])
 
     return entrop
 
 def getAlfabeto_MatTrans(mensaje: list):
     """
-    Recibe un mensaje emitido por una fuente y devuelve su alfabeto y su matriz de transición (asumiendo que es una fuente de Markov de orden 1)
+    Recibe un mensaje emitido por una fuente y devuelve su alfabeto y su matriz de transición
     """
     alfabeto = _getAlfabeto_mensaje(mensaje)
     cantSimbolos = [0] * len(alfabeto) # Cantidad de veces que aparece cada símbolo para calcular sus frecuencias
@@ -184,7 +157,7 @@ def getAlfabeto_MatTrans(mensaje: list):
         cantSimbolos[alfabeto.index(elem)] += 1
 
     for indice in range(len(mensaje) - 1):
-        matTrans[alfabeto.index(mensaje[indice])][alfabeto.index(mensaje[indice + 1])] += 1/cantSimbolos[alfabeto.index(mensaje[indice])]
+        matTrans[alfabeto.index(mensaje[indice + 1])][alfabeto.index(mensaje[indice])] += 1/cantSimbolos[alfabeto.index(mensaje[indice])]
     return alfabeto, matTrans 
 
 def simularMensaje(longMensaje, alfabeto, matTrans):
@@ -193,10 +166,29 @@ def simularMensaje(longMensaje, alfabeto, matTrans):
     Devuelve un string simulado de la fuente.
     """
 
+    matrizTraspuesta  = [list(columna) for columna in zip(*matTrans)]
+    
     simbActual = random.choice(alfabeto) # Elijo un símbolo inicial al azar
     mensaje = ""
 
-    for i in range(longMensaje):
+    for _ in range(longMensaje):
         mensaje += simbActual # Funciona bien con mensajes cortos pero los strings son inmutables, crea un objeto String nuevo en cada vuelta 
-        simbActual = random.choices(alfabeto, weights = matTrans[alfabeto.index(simbActual)],k = 1)[0]
+        simbActual = random.choices(alfabeto, weights = matrizTraspuesta[alfabeto.index(simbActual)],k = 1)[0]
     return mensaje
+
+def printearFuente(matTrans):
+    print("")
+    for fila in matTrans:
+        print(fila)
+    print("")
+
+def esFuenteMemoria(matTrans, tolerancia = 0.03):
+    """
+    Recibe la matriz de transición de una fuente y según las probabilidades y la tolerancia ingresada, devuelve True si la fuente es de memoria.
+
+    La diferencia entre el mayor y el menor de cada fila tiene que ser menor a la tolerancia para todas las filas
+    """
+    for fila in matTrans:
+        if (max(fila) - min(fila)) > tolerancia:
+            return True
+    return False

@@ -7,7 +7,6 @@ print("")
 
 alfabeto, matTrans = libguia2.getAlfabeto_MatTrans(cadena)
 print("El alfabeto de la fuente es " + str(alfabeto) + " y su matriz de transición es: ")
-for fila in matTrans:
-    print(fila)
+libguia2.printearFuente(matTrans)
 
 print("Nuevo mensaje simulado de la fuente con longitud 10: " + libguia2.simularMensaje(10,alfabeto,matTrans))
