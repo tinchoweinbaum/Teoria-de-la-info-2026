@@ -99,6 +99,8 @@ def getExtensionProbsOrdN(alfabeto, probs, n):
     """
     Recibe un alfabeto con sus probabilidades y un número entero N.
     Devuelve dos listas: La extensión de orden n junto con una lista de sus probabilidades.
+
+    Se rompe si la fuente original tenía símbolos de más de 1 caracter, ej: "AB" como un único símbolo.
     """
     extOrdN = _getExtensionOrdN(alfabeto, n)
     probExtOrdN = [1]*len(extOrdN)

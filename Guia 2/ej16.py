@@ -40,3 +40,5 @@ for mensaje in mensajes:
         entrop = libguia2.getEntropiaMarkov(matTrans,libguia2.getVectorMarkov_analitico(matTrans))
 
     print("Su entropía es " + str(entrop))
+    print("----------------------------------------------------------------------------------------")
+    print("")
