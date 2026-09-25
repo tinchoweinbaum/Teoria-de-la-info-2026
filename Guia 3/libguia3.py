@@ -151,3 +151,29 @@ def getEntropBaseR(probs: list[float], r: int) -> float:
             entrop += prob * math.log(1/prob, r)
     return entrop
 codigos = []
+
+def _cantInfoBaseR(prob, r):
+    """
+    Recibe el valor de una única probabilidad y la base r y devuelve la cantidad de información en base r.
+
+    Función "privada"
+    """
+    return math.log(x=1/prob, base=r) if prob != 0 else 0
+
+def esCodigoCompacto(codigo: list[str], probs: list[float]) -> bool:
+    """
+    Recibe un código y las probabilidades de la fuente que codifica.
+    Devuelve True si el código es compacto, False si no.
+    """
+    _, esInstantaneo, _ = clasificarCodigo(codigo)
+
+    if not esInstantaneo:
+        return False
+
+    alfabetoCodigo = getAlfabetoCodigo(codigo)
+    r = len(alfabetoCodigo)
+    for i in range(len(codigo)): # Checkeo que todas las palaras son <= en long. que la cantidad de información del símbolo que codifican.
+        if len(codigo[i]) > math.ceil(_cantInfoBaseR(probs[i], r)):
+            return False
+
+    return True
