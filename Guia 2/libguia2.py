@@ -137,13 +137,17 @@ def getVectorMarkov_analitico(matrizProbs, tolerancia=1e-6):
             
         pi = pi_nuevo
 
-def getEntropiaMarkov(matrizProbs, vectorMarkov):
+def getEntropiaMarkov(matrizProbs, vectorMarkov, base=2) -> float:
+    """
+    Recibe la matriz de transición y el vector estacionario de una fuente de markov junto con una base r para la entropía.
+    Devuelve la entropía de la fuente markoviana en base r.
+    """
     entrop = 0
 
     for i in range(len(vectorMarkov)):
         for j in range(len(matrizProbs[i])):
             if matrizProbs[j][i] != 0:
-                entrop += vectorMarkov[i] * matrizProbs[j][i]*math.log2(1/matrizProbs[j][i])
+                entrop += vectorMarkov[i] * matrizProbs[j][i]*math.log(1/matrizProbs[j][i],base)
 
     return entrop
 

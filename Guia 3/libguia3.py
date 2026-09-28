@@ -3,6 +3,7 @@ Librería con las funciones para resolver los problemas de la guía 3.
 """
 
 import math
+import random
 
 def esCodigoNoSingular(codigo):
     """
@@ -150,7 +151,6 @@ def getEntropBaseR(probs: list[float], r: int) -> float:
         if prob > 0:
             entrop += prob * math.log(1/prob, r)
     return entrop
-codigos = []
 
 def _cantInfoBaseR(prob, r):
     """
@@ -158,7 +158,7 @@ def _cantInfoBaseR(prob, r):
 
     Función "privada"
     """
-    return math.log(x=1/prob, base=r) if prob != 0 else 0
+    return math.log(1/prob, r) if prob != 0 else 0
 
 def esCodigoCompacto(codigo: list[str], probs: list[float]) -> bool:
     """
@@ -177,3 +177,22 @@ def esCodigoCompacto(codigo: list[str], probs: list[float]) -> bool:
             return False
 
     return True
+
+def getLenPalabrasCodigoCompacto(probs, r):
+    """
+    Recibe la distribución de probabilidades de una fuente y la cantidad de símbolos en su alfabeto código (r).
+    Devuelve una lista con la posible longitud de cada palabra código para que un código con esas longitudes sea compacto.
+    """
+    lenPalabras = []
+    for prob in probs:
+        lenPalabras.append(math.ceil(_cantInfoBaseR(prob, r)))
+    return lenPalabras
+
+def simulaMensajeCodificado(codigo, probs, lenMensaje, retString = False):
+    """
+    Recibe un código junto con las probabilidades de la fuente que codifica y una longitud de mensaje.
+    Devuelve un mensaje aleatorio de longitud lenMensaje emitido por la fuente codificado con el codigo provisto.
+    Si retString == True devuelve el mensaje como string, si no en un alista
+    """
+    mensaje = (random.choices(codigo, weights = probs, k = lenMensaje))
+    return mensaje if not retString else "".join(mensaje)
