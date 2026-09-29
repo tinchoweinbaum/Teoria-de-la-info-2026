@@ -191,7 +191,7 @@ print("")
 print("El código es compacto" if esCodigoCompacto(codigo, probs) else "El código no es compacto")
 
 """
-Para comenzar, a simple vista se puede asegurar que el código no es instantáneo ya que hay palabras código que son prefijo de otras: A es prefijo de AB y B es prefijo de BC, no podemos entonces asegurar que el código sea unívoco por ahora.
+Para comenzar, a simple vista se puede asegurar que el código no es instantáneo ya que hay palabras código que son prefijo de otras: A es prefijo de AB y B es prefijo de BC, no podemos entonces asegurar que el código sea unívoco ni compacto por ahora.
 
 Luego se calcula la inecuación de Kraft sobre el código dado, es importante notar que este valor depende únicamente de las longitudes de las palabras código y NO de las probabilidades de la fuente que se codifica.
 Con el resultado obtenido, no podemos decir con certeza si el código es unívoco o no, porque el cumplimiento de la inecuación de Kraft es una condición necesaria pero no suficiente para clasificar un código como unívocamente decodificable, podemos asegurar en cambio que existe un código instantáneo (y por lo tanto unívocamente decodificable) con las mismas longitudes que el código estudiado.
@@ -204,4 +204,10 @@ Sin embargo, para poder asegurar que se trata de un código compacto necesitamos
 
 Si se recibiese el mensaje ABA, no sería posible determinar si el mensaje emitido por la fuente fue S₁S₄S₁ o S₂S₁, queda demostrado entonces que este código NO es unívocamente decodificable, y por extensión NO es compacto, ya que la univocidad es un requerimiento de los códigos compactos, por más de cumplir todos los otros requerimientos.
 De igual manera en el programa se ejecuta el algoritmo de Sardinas-Patterson y se puede ver que este devuelve False.
+
+Un posible código compacto con el mismo alfabeto es entonces C = {A, CA, CB, B, CC}
+Este código no contiene prefijos, lo que lo hace instantáneo y a su vez unívocamente decodificable, al tener exactamente las mismas longitudes que el código original podemos asegurar con certeza que el código es compacto.
+Esto también es posible demostrarlo calculando la cantidad de información en base 3 para todos los símbolos de la fuente, y verificando que todas las palabras código propuestas coinciden con este valor en su longitud, es decir: I(Si) = li para todos los símbolos de la fuente. 
+
+
 """
