@@ -414,3 +414,5 @@ def simulaMensajeCodificado(codigo, probs, lenMensaje, retString = False):
     """
     mensaje = (random.choices(codigo, weights = probs, k = lenMensaje))
     return mensaje if not retString else "".join(mensaje)
+
+print(getLenPalabrasCodigoCompacto([1/3, 1/9, 1/9, 1/3, 1/9], 3))

@@ -208,6 +208,4 @@ De igual manera en el programa se ejecuta el algoritmo de Sardinas-Patterson y s
 Un posible código compacto con el mismo alfabeto es entonces C = {A, CA, CB, B, CC}
 Este código no contiene prefijos, lo que lo hace instantáneo y a su vez unívocamente decodificable, al tener exactamente las mismas longitudes que el código original podemos asegurar con certeza que el código es compacto.
 Esto también es posible demostrarlo calculando la cantidad de información en base 3 para todos los símbolos de la fuente, y verificando que todas las palabras código propuestas coinciden con este valor en su longitud, es decir: I(Si) = li para todos los símbolos de la fuente. 
-
-
 """
