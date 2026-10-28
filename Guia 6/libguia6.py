@@ -40,3 +40,39 @@ def getMatCanal(entrada: str, salida: str) -> list[list[float]]:
     for i in range(len(entrada)):
         matRet[alfabetoEntrada.index(entrada[i])][alfabetoSalida.index(salida[i])] += 1/cantApariciones[alfabetoEntrada.index(entrada[i])]
     return matRet
+
+def getProbSalida(matCanal, probsPriori) -> list[float]:
+    """
+    Recibe la matriz de un canal junto con las probabilidades a priori de la fuente y devuelve una lista con las probabilidades de salida de cada símbolo de salida.
+
+    La probabilidad de salida representa la probabilidad "absoluta" de recibir un símbolo b del alfabeto de salida del canal: P(bᵢ)
+
+    (preguntar si esta interpretación está bien)
+    """
+    cantSalidas = len(matCanal[0]) # Cantidad de simbolos de salida del canal.
+    cantEntradas = len(matCanal) # Cantidad de símbolos de entrada del canal.
+    listaProbs = [0] * cantSalidas
+
+    for i in range(cantSalidas):
+        for j in range(cantEntradas):
+            listaProbs[i] += matCanal[j][i] * probsPriori[j]
+    return listaProbs
+
+def getMatProbPosteriori(matCanal, probsPriori, probsSalida) -> list[list[float]]:
+    """
+    Recibe la matriz del canal junto con las probabilidades de entrada y salida de los simbolos de entrada y salida respectivamente.
+
+    Devuelve la matriz de probabilidades a posteriori del canal.
+
+    La probabilidad a posteriori de un símbolo 'a' del alfabeto de entrada A del canal es la probabilidad de haber recibido 'a' conociendo la salida 'b': P(aᵢ/bⱼ)
+    """
+    filas = len(matCanal)
+    columnas = len(matCanal[0])
+    matPosteriori = [[0.0 for _ in range(columnas)] for _ in range(filas)]
+
+    # i recorre las filas (entradas), j recorre las columnas (salidas)
+    for i in range(filas):
+        for j in range(columnas):
+            matPosteriori[i][j] = (matCanal[i][j] * probsPriori[i]) / probsSalida[j]
+            
+    return matPosteriori
