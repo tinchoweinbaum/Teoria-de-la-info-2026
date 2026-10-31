@@ -123,10 +123,11 @@ def getEntrop(probs, r=2):
         entrop += prob * math.log(1/prob,r)
     return entrop
 
-# --- Funciones de Entropia a posteriori H(A/B)(ruido) ---
+# --- Funciones de Entropia a posteriori H(A/B)(ruido o equivocación) ---
 
 def getEntropPosterioriBaseR_simbolo(matPosteriori, alfabetoSalida, b, r=2):
     """
+    No voy a usar jamás esta función en mi vida.
     Recibe la matriz de probabilidades a posteriori del canal junto a su alfabeto de salida, el símbolo b a calcular su entropía junto a la base logarítmica de la entropía, por defecto 2.
 
     Devuelve la entropía a posteriori asociada al símbolo de salida bj.
@@ -200,4 +201,95 @@ def _getEntropPosterioriMediaBaseR(matPosteriori, probSalida, r=2):
         entropPosterioriMedia += probSalida[i] * _getEntropPosterioriBaseR_index(matPosteriori, i, r)
     return entropPosterioriMedia # o ruido ¯\_(ツ)_/¯
 
-# --- Funciones de Equivocación H(B/A)
+# --- Funciones de pérdida H(B/A) ---
+
+def _getPerdidaBaseR_index(matCanal, fila, r=2) -> float:
+    """
+    Recibe la matriz del canal, la fila del simbolo a calcular la péridad y una base logarítmica para la entropía, por defecto 2.
+
+    Devuelve la pérdida asociada a este símbolo de entrada. H(B/ai)
+
+    La pérdida es la incertidumbre sobre que símbolo va a aparecer en la salida conociendo la entrada (preguntar esta definición)
+    """
+    perdida = 0
+    for prob in matCanal[fila]:
+        perdida += prob * math.log(1/prob,r) if prob != 0 else 0
+    return perdida
+
+def getListaPerdidaBaseR(matCanal, r=2) -> list[float]:
+    """
+    Recibe la matriz del canal junto a una base logarítmica r para la entropía, por defecto 2.
+    Devuelve una lista con la pérdida asociada a cada uno de los símbolos de entrada del canal H(B/ai)
+    La pérdida es la incertidumbre sobre que símbolo va a aparecer en la salida conociendo la entrada (preguntar esta definición)
+    """
+    cantEntradas = len(matCanal)
+    listaPerdida = [0] * cantEntradas
+    for i in range(cantEntradas):
+        listaPerdida[i] = _getPerdidaBaseR_index(matCanal, i, r)
+    return listaPerdida
+
+def getPerdidaTotalBaseR(matCanal, probsPriori, r=2) -> float:
+    perdidaTotal = 0
+    for i in range(len(probsPriori)):
+        perdidaTotal += probsPriori[i] * _getPerdidaBaseR_index(matCanal, i, r)
+    return perdidaTotal
+
+# --- Funciones de Información mutua I(A,B) ---
+
+def getInfoMutua_procSimultaneo(matCanal, probsPriori, probSalida, r=2) -> float:
+    """
+    Recibe la matriz de procesos simultáneos, las probabilidades de entrada y de salida del canal, y una base logarítmica, por defecto 2.
+    Devuelve la información mutua del canal calculándola usando la matriz de procesos simultáneos: I(A,B)
+
+    La información mutua del canal representa la cantidad de información sobre la entrada A que sobrevive al paso por el canal.
+    """
+    infoMedia = 0
+    matSimultaneo = getMatProcesoSimultaneo_priori(matCanal, probsPriori)
+    entradas = len(matSimultaneo)
+    salidas = len(matSimultaneo[0])
+
+    for i in range(entradas):
+        for j in range(salidas):
+            infoMedia += matSimultaneo[i][j] * math.log(matSimultaneo[i][j]/(probsPriori[i] * probSalida[j]), r) if matSimultaneo[i][j] != 0 else 0 # la simultanea depende de las de entrada y salida, no hace falta checkearlas, si es distinta de 0 las otras 2 tambien
+    return infoMedia
+
+def getInfoMutua_diferencia(matCanal, probsPriori) -> float:
+    """
+    Recibe la matriz de procesos simultáneos, las probabilidades de entrada y de salida del canal, y una base logarítmica, por defecto 2.
+    Devuelve la información mutua del canal calculando la diferencia entre la entropía a priori y el ruido del canal: I(A,B)
+
+    La información mutua del canal representa la cantidad de información sobre la entrada A que sobrevive al paso por el canal.
+    """
+    entropPriori = getEntrop(probsPriori)
+    ruido = getEntropPosterioriMediaBaseR(matCanal, probsPriori)
+    return entropPriori - ruido
+
+# --- Funciones de entropía conjunta o afín H(A,B) ---
+
+def getEntropConjunta_procSimultaneo(matCanal, probsPriori, r=2) -> float:
+    """
+    Recibe la matriz de procesos simultaneos del canal y las probabilidads a priori junto a una base logarítmica, por defecto 2.
+    Devuelve la entropía conjunta, también llamada entropía afín H(A,B), calculada por medio de la suma de las entropías
+    de todos las combinaciones de entrada/salida posibles.
+
+    La entropía conjunta H(A,B) representa la incertidumbre sobre la entrada y la salida a la vez sin conocer ninguna de las 2.
+    """
+    matSimultaneo = getMatProcesoSimultaneo_priori(matCanal, probsPriori)
+    entropAfin = 0
+    filas = len(matSimultaneo)
+    columnas = len(matSimultaneo[0])
+
+    for i in range(filas):
+        for j in range(columnas):
+            entropAfin += matSimultaneo[i][j] * math.log(1/matSimultaneo[i][j], 2) if matSimultaneo[i][j] != 0 else 0
+    return entropAfin
+
+def getEntropConjunta_diferencia(matCanal, probsPriori, probSalida) -> float:
+    """
+    Recibe la matriz del canal junto con las probabilidades a priori y de salida del canal.
+    Devuelve la entropía afín o conjunta H(A,B) del canal calculándola con la diferencia de entropías y de información mutua.
+
+    La entropía conjunta H(A,B) representa la incertidumbre sobre la entrada y la salida a la vez sin conocer ninguna de las 2.
+    """
+    infoMutua = getInfoMutua_procSimultaneo(matCanal, probsPriori, probSalida)
+    return getEntrop(probSalida) + getEntrop(probsPriori) - infoMutua
