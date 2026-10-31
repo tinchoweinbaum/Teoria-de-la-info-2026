@@ -268,7 +268,7 @@ def getInfoMutua_diferencia(matCanal, probsPriori) -> float:
 
 def getEntropConjunta_procSimultaneo(matCanal, probsPriori, r=2) -> float:
     """
-    Recibe la matriz de procesos simultaneos del canal y las probabilidads a priori junto a una base logarítmica, por defecto 2.
+    Recibe la matriz del canal y las probabilidads a priori junto a una base logarítmica, por defecto 2.
     Devuelve la entropía conjunta, también llamada entropía afín H(A,B), calculada por medio de la suma de las entropías
     de todos las combinaciones de entrada/salida posibles.
 
@@ -281,7 +281,7 @@ def getEntropConjunta_procSimultaneo(matCanal, probsPriori, r=2) -> float:
 
     for i in range(filas):
         for j in range(columnas):
-            entropAfin += matSimultaneo[i][j] * math.log(1/matSimultaneo[i][j], 2) if matSimultaneo[i][j] != 0 else 0
+            entropAfin += matSimultaneo[i][j] * math.log(1/matSimultaneo[i][j], r) if matSimultaneo[i][j] != 0 else 0
     return entropAfin
 
 def getEntropConjunta_diferencia(matCanal, probsPriori, probSalida) -> float:
