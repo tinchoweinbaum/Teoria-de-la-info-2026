@@ -293,3 +293,36 @@ def getEntropConjunta_diferencia(matCanal, probsPriori, probSalida) -> float:
     """
     infoMutua = getInfoMutua_procSimultaneo(matCanal, probsPriori, probSalida)
     return getEntrop(probSalida) + getEntrop(probsPriori) - infoMutua
+ # ----
+
+def esCanalSinRuido(matCanal) -> bool:
+    """
+    Recibe la matriz de un canal y devuelve True si el canal es sin ruido.
+    Un canal es sin ruido si en todas las columnas existe un único elemento != 0.
+
+    En un canal sin ruido, H(A/B) = 0 y la información mutua es igual a la entropía de entrada.
+    H(A) = I(A,B)
+    """
+    filas = len(matCanal)
+    columnas = len(matCanal[0])
+
+    for j in range(columnas):
+        encontrado = False
+        for i in range(filas):
+            if matCanal[i][j] != 0 and not encontrado:
+                encontrado = True
+            elif matCanal[i][j] != 0:
+                return False
+        if not encontrado:
+            return False
+    return True
+
+def esCanalDeterminante(matCanal) -> bool:
+    """
+    Recibe la matriz de un canal y devuelve True si este es determinante.
+    Un canal es determinante si en todas sus filas existe un único elemento != 0
+
+    En un canal determinante, la pérdida H(B/A) es 0, y se conoce con certeza la salida si se conoce previamente la entrada
+    H(B) = I(A,B)
+    """
+    return all(any(elem == 1 for elem in fila) for fila in matCanal)
