@@ -444,6 +444,8 @@ def getCapacidadCanal(matCanal) -> float:
     Si no es ninguna de estas 2 cosas la función devuelve None, si cumple alguna de las 2 condiciones devuelve la capacidad del canal.
 
     La capacidad del canal es la máxima cantidad de información que puede transmitir el canal, es decir, cuanto vale I(A,B) cuando se da la distribución de probabilidades de la entrada que maximiza I(A,B).
+
+    PREGUNTAR POR COMO SE CALCULA LA CAPACIDAD DE UN CANAL NORMAL Y DE UN CANAL BINARIO SIMÉTRICO ESPECÍFICAMENTE.
     """
     if not (esCanalDeterminante(matCanal) or esCanalSinRuido):
         return None
