@@ -326,3 +326,130 @@ def esCanalDeterminante(matCanal) -> bool:
     H(B) = I(A,B)
     """
     return all(any(elem == 1 for elem in fila) for fila in matCanal)
+
+def getCanalCompuesto(canalA, canalB) -> list[list[float]]:
+    """
+    Recibe dos matrices que representan cada una a un canal y devuelve el canal compuesto por medio de multiplicar las matrices
+
+    Si las matrices no son multiplicables devuelve None
+    """
+    if len(canalA[0]) != len(canalB):
+        return None
+
+    filas = len(canalA)
+    columnas = len(canalB[0])
+
+    canalComp = [[0.0 for _ in range(columnas)] for _ in range(filas)]
+
+    for i in range(filas):
+        for j in range(columnas):
+            for k in range(len(canalA[i])):
+                canalComp[i][j] += canalA[i][k] * canalB[k][j]
+    
+    return canalComp
+
+def _checkColumnasReducibles(matCanal, columnaA, columnaB) -> tuple[bool, float]:
+    """
+    Recibe un canal junto a dos indices de columnas dentro de la matriz.
+    Devuelve True y el valor del coeficiente lineal si las dos columnas indicadas son linealmente dependientes (reducibles entre sí).
+    """
+    refA = 0
+    refB = 0
+
+    for fila in matCanal:
+        if fila[columnaA] != 0 or fila[columnaB] != 0:
+            refA = fila[columnaA]
+            refB = fila[columnaB]
+            break
+            
+    if refA == 0 and refB == 0:
+        return True, 0
+    
+    for fila in matCanal:
+        if fila[columnaA] * refB != fila[columnaB] * refA:
+            return False, 0
+            
+    coef = refA / refB if refB != 0 else 0 
+    return True, coef
+
+def _getCanalDeterminanteCombinacion(matCanal, columnaA, columnaB):
+    """
+    Recibe un canal junto a dos índices de columnas dentro de la matriz.
+
+    Si las columnas no son LD devuelve None.
+    Si se pueden reducir devuelve el canal determinante necesario para poner en serie con el canal original para lograr la reducción.
+    """
+    reducibles, coef = _checkColumnasReducibles(matCanal, columnaA, columnaB)
+    
+    if not reducibles:
+        return None
+
+    columnas = len(matCanal[0])
+    col_mantener = min(columnaA, columnaB)
+    col_eliminar = max(columnaA, columnaB)
+
+    # Inicializamos la matriz llena de ceros
+    matDeterminista = [[0.0] * (columnas - 1) for _ in range(columnas)]
+
+    for i in range(columnas):
+        if i == col_eliminar:
+            destino = col_mantener
+        else:
+            # Si ya pasamos la columna eliminada, los índices se desfasan en 1
+            destino = i if i < col_eliminar else i - 1
+            
+        matDeterminista[i][destino] = 1.0
+
+    return matDeterminista
+
+def reduceCanal(matCanal) -> list[list[float]]:
+    """
+    Recibe la matriz de un canal y la reduce a su mínima expresión componiéndola
+    con canales determinantes iterativamente hasta que no queden columnas linealmente dependientes.
+
+    Preguntar como puede ser que reducir un canal reduzca el ruido y/o la equivocación del canal?? no es el mismo canal???
+    """
+    # shallow copy porque las listas son inmutables :p
+    canalReducido = [fila[:] for fila in matCanal]
+    
+    hubo_reduccion = True
+    
+    while hubo_reduccion:
+        hubo_reduccion = False
+        columnas = len(canalReducido[0])
+        
+        # busca parejas de columnas reducibles
+        for i in range(columnas):
+            for j in range(i + 1, columnas):
+                reducibles, coef = _checkColumnasReducibles(canalReducido, i, j)
+                
+                if reducibles:
+                    matDeterminante = _getCanalDeterminanteCombinacion(canalReducido, i, j)
+                    canalReducido = getCanalCompuesto(canalReducido, matDeterminante) # Obtiene el canal reducido por composición con un canal determinante
+                    
+                    # rompe el forloop
+                    hubo_reduccion = True
+                    break
+            
+            if hubo_reduccion:
+                break # rompe el for exterior también
+                
+    return canalReducido
+
+def getCapacidadCanal(matCanal) -> float:
+    """
+    Recibe la matriz de un canal que DEBE ser alguna de estas 2 cosas:
+        -> Canal Binario
+        -> Canal Determinante
+    Si no es ninguna de estas 2 cosas la función devuelve None, si cumple alguna de las 2 condiciones devuelve la capacidad del canal.
+
+    La capacidad del canal es la máxima cantidad de información que puede transmitir el canal, es decir, cuanto vale I(A,B) cuando se da la distribución de probabilidades de la entrada que maximiza I(A,B).
+    """
+    if not (esCanalDeterminante(matCanal) or esCanalSinRuido):
+        return None
+
+    if esCanalDeterminante(matCanal):
+        return math.log2(len(matCanal[0]))
+
+    if esCanalSinRuido(matCanal):
+        return math.log2(len(matCanal))
