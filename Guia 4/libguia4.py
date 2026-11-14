@@ -193,4 +193,208 @@ def getHammingErrores(codigo: list[str]) -> tuple[int, int, int]:
     """
     detectables, corregibles = getCantErroresDetectablesCorregibles(codigo)
     return getMinDistHammingCodigo(codigo), detectables, corregibles
+
+def getByteArray_char(char: str) -> bytearray:
+    """
+    Recibe un char (ASCII de 7 bits) y devuelve un bytearray de 8 bits, en el que el 8vo bit es la paridad.
+    """
+    bitsRet = bytearray()
+    bitsChar = ord(char)
+    paridad = 0
+
+    for i in range(6, -1, -1):
+        bit = (bitsChar >> i) & 1 # Shiftea y ANDea
+        bitsRet.append(bit)
+        paridad ^= bit # XOR acumulativo de paridad
+
+    bitsRet.append(paridad)
+
+    return bitsRet
+
+def getListaBits_char(char: str) -> list[int]:
+    """
+    Recibe un char (ASCII de 7 bits) y devuelve una lista de bits (ints), en el que el 8vo bit es la paridad.
+    """
+    return list(getByteArray_char(char))
+
+def getParidad_lista(byte: list[int]) -> int:
+    """
+    Recibe una lista que representa un ASCII de 7 bits (IGNORA EL 8VO BIT) y devuelve el valor de su paridad.
+
+    Cantidad par de 1's -> paridad = 0
+    Cantidad impar de 1's -> paridad = 1
+
+    Recibe un byte de 8 bits pero ignora el último, utiliza unicamente los primeros 7.
+    """
+    paridad = 0
+    for bit in byte[:-1]:
+        paridad ^= bit
+    return paridad
+
+def checkErrorParidad_bytearray(bits: bytearray):
+    """
+    Recibe un bytearray de 8 bits que representa un ASCII de 7 bits con el 8vo siendo el de paridad.
+    Devuelve True si detecta un error de paridad, False si no.
+    """
+    paridad = 0
+    for i in range(len(bits) - 1):
+        paridad ^= bits[i]
+
+    return paridad != bits[-1]
+
+def checkErrorParidad_lista(bits: list[int]) -> bool:
+    """
+    Recibe una lista de 8 ints que representa un ASCII de 7 bits con el 8vo siendo el de paridad.
+    Devuelve True si detecta un error de paridad, False si no.
+
+    Función wrapper.
+    """
+    return checkErrorParidad_bytearray(bytearray(bits))
+
+def getChar_bytearray(bits: bytearray) -> str:
+    """
+    Recibe un bytearray que representa un ASCII de 7 bits con el 8vo siendo el bit de paridad.
+    Devuelve el caracter ASCII correspondiente.
+
+    Ignora el 8vo bit, si el código tiene un error de paridad, esta función lo convierte como está.
+    """
+    copia = bits.copy()
+    copia.pop() # Bytearray copiado
+
+    valorInt = 0
+    for bit in copia:
+        valorInt = (valorInt << 1) | bit
+
+    return chr(valorInt) # chr() espera un int
+
+def getChar_list(bits: list[int]) -> str:
+    """
+    Recibe una lista que representa un ASCII de 7 bits con el 8vo siendo el bit de paridad.
+    Devuelve el caracter ASCII correspondiente.
+
+    Ignora el 8vo bit, si el código tiene un error de paridad, esta función lo convierte como está.
     
+    Función wrapper.
+
+    """
+    return getChar_bytearray(bytearray(bits))
+
+# def decodificaMatrizMensaje(matMensaje: list[list[int]]) -> str:
+#     """
+#     Recibe una matriz que contiene un mensaje codificado en BINARIO.
+#     Con sus bits de paridad verticales, horizontales y el cruzado.
+
+#     Devuelve el mensaje original, y None si no se pudo recuperar el mensaje por los errores no corregibles.
+#     """
+
+#     # --- Checkeo de paridad cruzada ---
+#     filaLRC = matMensaje[-1]
+#     columnaVRC = [fila[-1] for fila in matMensaje]
+
+#     if getParidad_lista(filaLRC) != getParidad_lista(columnaVRC):
+#         return None
+
+#     # --- Checkeo de paridades VRC y LRC ---
+#     mensaje = ""
+#     for fila in matMensaje[:-1]:
+#         posError = -1
+#         errorHorizontal = checkErrorParidad_lista(fila)
+#         if errorHorizontal: # Busco intersección de error.
+#             errorVRC_encontrado = False
+#             for i in range (len(fila)):
+#                 columnaAct = [f[i] for f in matMensaje]
+#                 if checkErrorParidad_lista(columnaAct) and not errorVRC_encontrado:
+#                     errorVRC_encontrado = True
+#                     posError = i
+#                 elif checkErrorParidad_lista(columnaAct):
+#                     return None # Más de 1 error de paridad -> no se puede recuperar
+                
+#             if (errorVRC_encontrado):
+#                 fila[posError] = 1 if fila[posError] == 0 else 0 # Corrijo el error.
+            
+#         mensaje += getChar_list(fila)
+
+#     return mensaje
+
+def decodificaMatrizMensaje(matMensaje: list[list[int]]) -> str | None:
+    """
+    Recibe una matriz que contiene un mensaje codificado en BINARIO.
+    Con sus bits de paridad verticales, horizontales y el cruzado.
+
+    Devuelve el mensaje original, y None si no se pudo recuperar el mensaje por los errores no corregibles.
+    """
+    copia = [fila.copy() for fila in matMensaje] # deep copy porque las matrices son mutabls
+
+
+    # cantidad de columnas con error
+    cantErroresCol = 0
+    colError = -1
+    for c in range(len(copia[0])):
+        columnaAct = [f[c] for f in copia]
+        if checkErrorParidad_lista(columnaAct):
+            cantErroresCol += 1
+            colError = c
+
+    if cantErroresCol > 1: # si hay más de 1 columna con error, no se puede decodificar
+        return ""
+
+    # cant filas con error
+    cantErroresFila = 0
+    filaError = -1
+    for f in range(len(copia)):
+        if checkErrorParidad_lista(copia[f]):
+            cantErroresFila += 1
+            filaError = f
+
+    if cantErroresFila > 1:
+        return ""
+
+    # si hubo 1 error en fila y columna se puede corregit
+    if cantErroresFila == 1 and cantErroresCol == 1:
+        copia[filaError][colError] = 1 if copia[filaError][colError] == 0 else 0
+    elif cantErroresFila != cantErroresCol:
+        return ""  # errores sin intersección
+    
+    # decodifico caracteres después de corregir la matriz
+    mensaje = ""
+    for fila in copia[1:]: # 1: porque la primera fila es de bits de paridad, si fuese la ultima es :-1
+        mensaje += getChar_list(fila)
+
+    return mensaje
+
+def char_a_7bits(char: str) -> list[int]:
+    codigo = ord(char) & 0x7F # máscara para quedarme con los 7 bits, descarto el último
+    bits = []
+    
+    for i in range(6, -1, -1):
+        bits.append((codigo >> i) & 1)
+        
+    return bits
+
+def codificaMensajeMatriz(mensaje: str) -> list[list[int]]:
+    """
+    Recibe un mensaje y devuelve una matriz que lo representa,
+    incluyendo bits de paridad VRC (columna 7), LRC (fila 0) y cruzada (celda [0][7]).
+    """
+    cantFilas = len(mensaje) + 1
+    matRet = [[0] * 8 for _ in range(cantFilas)]
+
+    for i in range(1, cantFilas): # carga cada caracter en la matriz
+        bits = char_a_7bits(mensaje[i - 1])
+
+        paridad_vrc = 0 # calcula paridad de la fila
+        for b in bits:
+            paridad_vrc ^= b
+            
+        bits.append(paridad_vrc)
+        matRet[i] = bits
+
+    # paridad de columnas
+    for col in range(8):
+        paridad_lrc = 0
+        for fila in range(1, cantFilas):
+            paridad_lrc ^= matRet[fila][col]
+            
+        matRet[0][col] = paridad_lrc
+
+    return matRet
