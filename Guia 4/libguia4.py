@@ -69,8 +69,8 @@ def _getRendimientoCodigo(codigo, probs, base=2) -> float:
     Recibe un código junto a las probabilidades de la fuente que codifica y devuelve el valor del rendimiento del código.
     Utiliza base 2 para la entropía por defecto.
     """
-    entropFuente = sum(prob * math.log(1 / prob, base) for prob in probs)
-    l = sum(p * len(c) for p, c in zip(probs, codigo))
+    entropFuente = getEntropBaseR(probs)
+    l = getLongMedia(probs, codigo)
 
     return entropFuente / l if l != 0 else 0.0
 
@@ -142,7 +142,7 @@ def getCodigoHuffman_dict(probs: list[float], alfabeto: list[str]) -> dict[str, 
         
     return codigos
 
-def getCodigoHuffman(probs: list[float], alfabeto: list[str]) -> list[str]:
+def getCodigoHuffman(alfabeto: list[str],probs: list[float]) -> list[str]:
     """
     Recibe una lista con las probabilidades de una fuente y su alfabeto.
     Devuelve una lista con las palabras código binarias obtenidas por el algoritmo de Huffman
@@ -150,7 +150,7 @@ def getCodigoHuffman(probs: list[float], alfabeto: list[str]) -> list[str]:
     dictHuffman = getCodigoHuffman_dict(probs, alfabeto)
     return [dictHuffman[simbolo] for simbolo in alfabeto]
 
-def getRedundanciaRendimiento(probs: list[float], codigo: list[str]) -> tuple[float, float]:
+def getRendimientoRedundancia(probs: list[float], codigo: list[str]) -> tuple[float, float]:
     """
     Recibe una distribución de probabilidades de una fuente y su código y devuelve una tupla con el rendimiento y la redundancia de código.
     """
