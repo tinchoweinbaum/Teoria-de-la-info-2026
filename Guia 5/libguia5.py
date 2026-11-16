@@ -185,10 +185,86 @@ def codificaRLC(mensaje: str) -> str:
 
     return cadenaRet
 
-def getByteArrayRLC(mensaje: str):
+def codificaMensaje(alfabeto: list[str], codigo: list[str], mensaje: str) -> str:
     """
-    Recibe un mensaje y devuelve un bytearray que contiene el mensaje comprimido con RLC.
-    Usa un byte para almacenar el ASCII del caracter y otro byte para el número de apariciones consecutivas.
+    Recibe un alfabeto fuente junto a un código y un mensaje escrito en el alfabeto fuente indicado.
+    Devuelve el mensaje codificado utilizando las palabras código en una cadena de caracteres.
     """
-    pass
+    simbArmado = ""
+    mensajeCodificado = ""
+    for elem in mensaje:            
+        simbArmado += elem
+        if simbArmado in alfabeto:
+            mensajeCodificado += codigo[alfabeto.index(simbArmado)]
+            simbArmado = ""
 
+    return mensajeCodificado
+
+def codificaMensajeCodigoBinario_bytearray(alfabeto: list[str], codigo: list[str], mensajeOriginal: str) -> bytearray:
+    """
+    Recibe un alfabeto fuente junto a un código binario y un mensaje escrito en el alfabeto fuente indicado.
+    Devuelve el mensaje codificado utilizando las palabras código en un bytearray.
+    """
+    datos = bytearray()
+    if mensajeOriginal == "":
+        return datos
+
+    simbArmado = ""
+    mensajeCodificado = ""
+    for elem in mensajeOriginal:            
+        simbArmado += elem
+        if simbArmado in alfabeto:
+            mensajeCodificado += codigo[alfabeto.index(simbArmado)]
+            simbArmado = ""
+
+    relleno = (8 - len(mensajeCodificado) % 8) % 8
+    mensajeCodificado += "0" * relleno
+    datos.append(relleno)
+
+    # 3. Corto de a 8 caracteres, casteo de binario a int y guardo el byte
+    for i in range(0, len(mensajeCodificado), 8):
+        bloque = mensajeCodificado[i:i+8]
+        datos.append(int(bloque, 2))
+
+    return datos
+
+def decodificaMensajeCodigoBinario_bytearray(alfabeto: str, codigo: list[str], mensajeCodificado: bytearray) -> str:
+    """
+    Recibe un alfabeto fuente, su lista de palabras código binarias y un bytearray codificado.
+    Devuelve el mensaje original decodificado.
+    """
+    if len(mensajeCodificado) == 0:
+        return ""
+
+    # 1. Leo el primer byte para saber cuántos ceros de relleno hay al final
+    relleno = mensajeCodificado[0]
+
+    # 2. Reconstruyo la tira de '0' y '1' casteando cada byte a binario de 8 bits
+    cadena_bits = ""
+    for byte in mensajeCodificado[1:]:
+        cadena_bits += bin(byte)[2:].zfill(8)
+
+    # 3. Vuelo los ceros de relleno del final
+    if relleno > 0:
+        cadena_bits = cadena_bits[:-relleno]
+
+    # 4. Traduzco bit a bit hasta completar una palabra código
+    palabraArmada = ""
+    mensajeDecodificado = ""
+    for bit in cadena_bits:
+        palabraArmada += bit
+        if palabraArmada in codigo:
+            mensajeDecodificado += alfabeto[codigo.index(palabraArmada)]
+            palabraArmada = ""
+
+    return mensajeDecodificado
+
+def getTasaCompresion(mensaje: str, datos: bytearray) -> float:
+    """
+    Recibe el mensaje original y el bytearray codificado.
+    Devuelve la tasa de compresión (tamaño original / tamaño comprimido).
+    """
+    if len(datos) == 0:
+        return 0.0
+
+    return len(mensaje) / len(datos)
