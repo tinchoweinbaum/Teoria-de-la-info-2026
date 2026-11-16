@@ -76,7 +76,7 @@ def getMatProbPosteriori(matCanal, probsPriori, probsSalida) -> list[list[float]
     # i recorre las filas (entradas), j recorre las columnas (salidas)
     for i in range(filas):
         for j in range(columnas):
-            matPosteriori[i][j] = (matCanal[i][j] * probsPriori[i]) / probsSalida[j]
+            matPosteriori[i][j] = (matCanal[i][j] * probsPriori[i]) / probsSalida[j] if probsSalida[j] != 0 else 0
             
     return matPosteriori
 
@@ -120,7 +120,7 @@ def getEntrop(probs, r=2):
     """
     entrop = 0
     for prob in probs:
-        entrop += prob * math.log(1/prob,r)
+        entrop += prob * math.log(1 / prob, r) if prob != 0 else 0
     return entrop
 
 # --- Funciones de Entropia a posteriori H(A/B)(ruido o equivocación) ---
@@ -452,7 +452,7 @@ def esCanalBSC(matCanal: list[list[float]]) -> bool:
 def getCapacidadCanal(matCanal: list[list[float]]) -> float | None:
     """
     Calcula la capacidad del canal si es Determinante, Sin Ruido o Binario Simétrico (BSC).
-    Si no cumple ninguno, lo reduce hasta llegar a un caso base o devuelve None.
+    Si no cumple ninguno, lo reduce hasta llegar a un caso base o devuelve None en caso de que no sea ninguna de esas 3 cosas.
     """
     matActual = matCanal
 
@@ -476,3 +476,46 @@ def getCapacidadCanal(matCanal: list[list[float]]) -> float | None:
             return None
 
         matActual = matReducida
+
+def getCapacidadEstimada(matCanal: list[list[float]], paso: float) -> tuple[float, list[float]]:
+    """
+    Recibe la matriz de un canal BINARIO junto a un valor de paso que se utiliza en cada iteración para probar la distribución óptima.
+    Devuelve la mayor capacidad encontrada usando un valor de paso de manera estimativa junto con la distribución de probabilidades que maximiza la capacidad.
+    """
+    maxInfoMutua = -1
+    probsOptimas = []
+
+    for i in range(round(1 / paso) + 1):
+        p = min(1.0, i * paso)
+        probsAct = [p, 1.0 - p]
+        infoMutuaAct = getInfoMutua_procSimultaneo(matCanal, probsAct, getProbSalida(matCanal, probsAct))
+        if infoMutuaAct > maxInfoMutua:
+            maxInfoMutua = infoMutuaAct
+            probsOptimas = probsAct
+
+    return maxInfoMutua, probsOptimas
+
+def _getProbErrorSimbolo(matCanal: list[list[float]], probsPriori: list[float], indexSimbolo: int) -> float:
+    """
+    Recibe la matriz del canal, las probabilidades de entrada de la fuente y el index del símbolo a calcularle la probabilidad de error.
+    Devuelve la probabilidad de error usando la regla de decisión de máxima posibilidad condicional.
+
+    Función "privada"
+    """
+    probSalida = getProbSalida(matCanal, probsPriori)
+    matPosteriori = getMatProbPosteriori(matCanal, probsPriori, probSalida)
+
+    # regla de decisión que minimice probabilidad de error:
+    salidas = [fila[indexSimbolo] for fila in matPosteriori]
+    return 1 - max(salidas)
+
+def getProbErrorCanal(matCanal: list[list[float]], probsPriori: list[float]) -> float:
+    """
+    Recibe la matriz del canal junto a las probabilidades de entrada de la fuente.
+    Devuelve la probabilidad de error total del canal
+    """
+    probError = 0
+    probSalida = getProbSalida(matCanal, probsPriori)
+    for i in range(len(matCanal[0])):
+        probError += _getProbErrorSimbolo(matCanal, probsPriori, i) * probSalida[i] # que me importa a mi la memoria calculo 1000 veces la matriz a posteriori y las probs de salida
+    return probError
