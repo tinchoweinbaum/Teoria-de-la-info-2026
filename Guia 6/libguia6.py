@@ -436,22 +436,43 @@ def reduceCanal(matCanal) -> list[list[float]]:
                 
     return canalReducido
 
-def getCapacidadCanal(matCanal) -> float:
+def esCanalBSC(matCanal: list[list[float]]) -> bool:
     """
-    Recibe la matriz de un canal que DEBE ser alguna de estas 2 cosas:
-        -> Canal Binario
-        -> Canal Determinante
-    Si no es ninguna de estas 2 cosas la función devuelve None, si cumple alguna de las 2 condiciones devuelve la capacidad del canal.
-
-    La capacidad del canal es la máxima cantidad de información que puede transmitir el canal, es decir, cuanto vale I(A,B) cuando se da la distribución de probabilidades de la entrada que maximiza I(A,B).
-
-    PREGUNTAR POR COMO SE CALCULA LA CAPACIDAD DE UN CANAL NORMAL Y DE UN CANAL BINARIO SIMÉTRICO ESPECÍFICAMENTE.
+    Recibe la matriz de un canal y devuelve True si corresponde a la de un canal BSC (Binary symmetric chanel)
     """
-    if not (esCanalDeterminante(matCanal) or esCanalSinRuido):
-        return None
+    if len(matCanal) != 2 or any(len(fila) != 2 for fila in matCanal):
+        return False
 
-    if esCanalDeterminante(matCanal):
-        return math.log2(len(matCanal[0]))
+    return (
+        math.isclose(matCanal[0][0], matCanal[1][1], abs_tol=1e-9)
+        and math.isclose(matCanal[0][1], matCanal[1][0], abs_tol=1e-9)
+    )
 
-    if esCanalSinRuido(matCanal):
-        return math.log2(len(matCanal))
+
+def getCapacidadCanal(matCanal: list[list[float]]) -> float | None:
+    """
+    Calcula la capacidad del canal si es Determinante, Sin Ruido o Binario Simétrico (BSC).
+    Si no cumple ninguno, lo reduce hasta llegar a un caso base o devuelve None.
+    """
+    matActual = matCanal
+
+    while True:
+        if esCanalDeterminante(matActual):
+            return math.log2(len(matActual[0]))
+
+        if esCanalSinRuido(matActual):
+            return math.log2(len(matActual))
+
+        if esCanalBSC(matActual):
+            p = matActual[0][1]
+            if math.isclose(p, 0.0, abs_tol=1e-9) or math.isclose(p, 1.0, abs_tol=1e-9):
+                return 1.0
+            h_p = -p * math.log2(p) - (1.0 - p) * math.log2(1.0 - p)
+            return 1.0 - h_p
+
+        matReducida = reduceCanal(matActual)
+
+        if matReducida is None or len(matReducida[0]) == len(matActual[0]):
+            return None
+
+        matActual = matReducida
