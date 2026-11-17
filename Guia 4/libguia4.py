@@ -363,6 +363,9 @@ def decodificaMatrizMensaje(matMensaje: list[list[int]]) -> str | None:
     return mensaje
 
 def char_a_7bits(char: str) -> list[int]:
+    """
+    Recibe un char 
+    """
     codigo = ord(char) & 0x7F # máscara para quedarme con los 7 bits, descarto el último
     bits = []
     
@@ -370,6 +373,12 @@ def char_a_7bits(char: str) -> list[int]:
         bits.append((codigo >> i) & 1)
         
     return bits
+
+def strBits_a_matriz(cadenaBits: str) -> list[list[int]]:
+    """
+    Recibe una cadena continua de bits ('0' y '1') múltiplos de 8 y devuelve la matriz de enteros de filas de 8 bits.
+    """
+    return [[int(bit) for bit in cadenaBits[i:i+8]] for i in range(0, len(cadenaBits), 8)]
 
 def codificaMensajeMatriz(mensaje: str) -> list[list[int]]:
     """

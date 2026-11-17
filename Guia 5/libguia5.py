@@ -259,6 +259,43 @@ def decodificaMensajeCodigoBinario_bytearray(alfabeto: str, codigo: list[str], m
 
     return mensajeDecodificado
 
+def codificaMensajeCodigoBinario_str(alfabeto: list[str], codigo: list[str], mensajeOriginal: str) -> str:
+    """
+    Recibe un alfabeto fuente junto a un código binario y un mensaje escrito en el alfabeto fuente indicado.
+    Devuelve el mensaje codificado utilizando las palabras código en un string.
+    """
+    if mensajeOriginal == "":
+        return ""
+
+    simbArmado = ""
+    mensajeCodificado = ""
+    for elem in mensajeOriginal:
+        simbArmado += elem
+        if simbArmado in alfabeto:
+            mensajeCodificado += codigo[alfabeto.index(simbArmado)]
+            simbArmado = ""
+
+    return mensajeCodificado
+
+
+def decodificaMensajeCodigoBinario_str(alfabeto: list[str] | str, codigo: list[str], mensajeCodificado: str) -> str:
+    """
+    Recibe un alfabeto fuente, su lista de palabras código binarias y un string codificado.
+    Devuelve el mensaje original decodificado.
+    """
+    if mensajeCodificado == "":
+        return ""
+
+    palabraArmada = ""
+    mensajeDecodificado = ""
+    for bit in mensajeCodificado:
+        palabraArmada += bit
+        if palabraArmada in codigo:
+            mensajeDecodificado += alfabeto[codigo.index(palabraArmada)]
+            palabraArmada = ""
+
+    return mensajeDecodificado
+
 def getTasaCompresion(mensaje: str, datos: bytearray) -> float:
     """
     Recibe el mensaje original y el bytearray codificado.
@@ -268,3 +305,10 @@ def getTasaCompresion(mensaje: str, datos: bytearray) -> float:
         return 0.0
 
     return len(mensaje) / len(datos)
+
+if __name__ == "__main__":
+    alfabeto = ["S1","S2","S3","S4"]
+    mensaje = "1100111001111001"
+    codigo = ["11", "01", "00", "10"]
+
+    print(decodificaMensajeCodigoBinario_str(alfabeto, codigo, mensaje))
