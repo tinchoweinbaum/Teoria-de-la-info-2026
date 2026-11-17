@@ -7,4 +7,4 @@ probs = [0.5, 0.5]
 print("Matriz del Canal: ")
 for fila in matCanal: print(fila)
 
-print("Su probabilidad de error es: " + str(lib.getProbErrorCanal(matCanal, probs)))
+print("Su probabilidad de error es: " + str(lib.getProbErrorCanal_maxProbCondicional(matCanal, probs)))

@@ -495,10 +495,10 @@ def getCapacidadEstimada(matCanal: list[list[float]], paso: float) -> tuple[floa
 
     return maxInfoMutua, probsOptimas
 
-def _getProbErrorSimbolo(matCanal: list[list[float]], probsPriori: list[float], indexSimbolo: int) -> float:
+def _getProbErrorSimbolo_maxProbPosteriori(matCanal: list[list[float]], probsPriori: list[float], indexSimbolo: int) -> float:
     """
     Recibe la matriz del canal, las probabilidades de entrada de la fuente y el index del símbolo a calcularle la probabilidad de error.
-    Devuelve la probabilidad de error usando la regla de decisión de máxima posibilidad condicional.
+    Devuelve la probabilidad de error usando la regla de decisión de máxima probabilidad a posteriori.
 
     Función "privada"
     """
@@ -509,13 +509,42 @@ def _getProbErrorSimbolo(matCanal: list[list[float]], probsPriori: list[float], 
     salidas = [fila[indexSimbolo] for fila in matPosteriori]
     return 1 - max(salidas)
 
-def getProbErrorCanal(matCanal: list[list[float]], probsPriori: list[float]) -> float:
+def _getProbErrorSimbolo_maxProbCondicional(matCanal: list[list[float]], probsPriori: list[float], indexSimbolo: int) -> float:
+    """
+    Recibe la matriz del canal, las probabilidades de entrada de la fuente y el index del símbolo a calcularle la probabilidad de error.
+    Devuelve la probabilidad de error usando la regla de decisión de máxima posibilidad condicional.
+
+    Función "privada"
+    """
+    columna = [fila[indexSimbolo] for fila in matCanal]
+    fila_ganadora = columna.index(max(columna))
+
+    probError = 0.0
+    for i in range(len(matCanal)):
+        if i != fila_ganadora:
+            probError += probsPriori[i] * matCanal[i][indexSimbolo]
+
+    return probError
+
+def getProbErrorCanal_maxProbPosteriori(matCanal: list[list[float]], probsPriori: list[float]) -> float:
     """
     Recibe la matriz del canal junto a las probabilidades de entrada de la fuente.
-    Devuelve la probabilidad de error total del canal
+    Devuelve la probabilidad de error total del canal calculada con el criterio de máxima probabilidad a posteriori (minimiza el error)
     """
     probError = 0
     probSalida = getProbSalida(matCanal, probsPriori)
     for i in range(len(matCanal[0])):
-        probError += _getProbErrorSimbolo(matCanal, probsPriori, i) * probSalida[i] # que me importa a mi la memoria calculo 1000 veces la matriz a posteriori y las probs de salida
+        probError += _getProbErrorSimbolo_maxProbPosteriori(matCanal, probsPriori, i) * probSalida[i] # que me importa a mi la memoria calculo 1000 veces la matriz a posteriori y las probs de salida
+    return probError
+
+def getProbErrorCanal_maxProbCondicional(matCanal: list[list[float]], probsPriori: list[float]) -> float:
+    """
+    Recibe la matriz del canal junto a las probabilidades de entrada de la fuente.
+    Devuelve la probabilidad de error total del canal calculada con el criterio de máxima probabilidad condicional
+
+    regla de máxima posibilidad = regla de máxima probabilidad condicional (ESTA FUNCIÓN).
+    """
+    probError = 0.0
+    for i in range(len(matCanal[0])):
+        probError += _getProbErrorSimbolo_maxProbCondicional(matCanal, probsPriori, i)
     return probError

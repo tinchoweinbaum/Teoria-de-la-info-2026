@@ -13,5 +13,5 @@ for fila in matCanal: print(fila)
 
 for prob in probs:
     print("Distribución de probabilidades de entrada: " + str(prob))
-    print("Con esta distribución de probabilidades de entrada, la probabilidad de error del canal es " + str(lib.getProbErrorCanal(matCanal, prob)))
+    print("Con esta distribución de probabilidades de entrada, la probabilidad de error del canal es " + str(lib.getProbErrorCanal_maxProbCondicional(matCanal, prob)))
     print("")
